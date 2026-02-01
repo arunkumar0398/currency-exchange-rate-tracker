@@ -1,0 +1,26 @@
+.status-banner {
+  padding: 0.875rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-banner.warning {
+  background: #f59e0b;
+  color: white;
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.warning-icon {
+  flex-shrink: 0;
+}
+
+.banner-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+}

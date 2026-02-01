@@ -1,0 +1,56 @@
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 1.125rem;
+  color: #111827;
+}
+
+.logo-icon {
+  font-size: 1.5rem;
+  color: #0f6cbd;
+}
+
+.logo-text {
+  font-weight: 600;
+  color: #0f6cbd;
+}
+
+.base-currency {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.label {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.currency-select {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  background: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #111827;
+  cursor: pointer;
+  outline: none;
+}
+
+.currency-select:disabled {
+  cursor: not-allowed;
+  background: #f9fafb;
+}

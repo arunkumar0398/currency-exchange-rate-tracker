@@ -1,0 +1,50 @@
+.app {
+  min-height: 100vh;
+  background: #f9fafb;
+  display: flex;
+  flex-direction: column;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 2rem;
+}
+
+.status-section {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem 2rem 0;
+}
+
+.footer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.5rem 2rem 2rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.sources-info,
+.resolution-info {
+  text-align: center;
+}
+
+.sources-info strong,
+.resolution-info strong {
+  font-weight: 600;
+  color: #4b5563;
+}
+
+@media (max-width: 768px) {
+  .status-section {
+    padding: 1rem;
+  }
+
+  .footer-info {
+    padding: 1rem;
+  }
+}
