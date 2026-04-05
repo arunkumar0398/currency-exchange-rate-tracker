@@ -244,36 +244,27 @@ npm run preview    # Preview production build
 
 ## Deployment
 
-### Railway (Recommended for Backend)
-
-**Prerequisites:**
-- Railway account ([railway.app](https://railway.app))
-- GitHub repository
+### Render (Recommended for Backend)
 
 **Deploy Backend:**
 
-1. **Create New Project** on Railway
-2. **Select Repository** - Choose your GitHub repo
-3. **Configure Service**:
-   - Root Directory: `backend`
-   - Start Command: Auto-detected from `railway.json`
-   - Or use: `node server.js`
-4. **Add Environment Variables** (Optional):
-   ```
-   PORT=3001
-   ```
-5. **Deploy** - Railway will:
-   - Run `npm install`
-   - Start server with `node server.js`
-   - Provide a public URL
+1. Go to [render.com](https://render.com) → **New** → **Web Service**
+2. Connect your GitHub repository
+3. Configure the service:
+   - **Root Directory**: `backend`
+   - **Runtime**: Node
+   - **Build Command**: `npm install`
+   - **Start Command**: `node server.js`
+   - **Instance Type**: Free
+4. Click **Create Web Service** — deploys in ~2-3 minutes
 
-**Files Required:**
-- `backend/start.sh` - Shell script for Railway
-- `backend/railway.json` - Railway configuration
-- `backend/package.json` - Dependencies
+**Verify deployment:**
+```bash
+curl https://your-app.onrender.com/api/health
+```
 
 **Backend URL:**
-Your backend will be available at: `https://your-app.up.railway.app`
+Your backend will be available at: `https://your-app.onrender.com`
 
 ### Vercel (Recommended for Frontend)
 
@@ -291,8 +282,8 @@ Your backend will be available at: `https://your-app.up.railway.app`
    ```
 
 3. **Set Environment Variables**:
-   - `VITE_API_URL` = Your Railway backend URL
-   - Example: `https://anchorfx-backend.up.railway.app`
+   - `VITE_API_URL` = Your Render backend URL
+   - Example: `https://anchorfx-backend.onrender.com`
 
 4. **Production Deploy**:
    ```bash
@@ -308,7 +299,7 @@ Your backend will be available at: `https://your-app.up.railway.app`
 ### Other Deployment Options
 
 **Backend Alternatives:**
-- **Render** - Similar to Railway, free tier available
+- **Railway** - Docker-based deployment, free tier available
 - **Heroku** - Classic PaaS (paid)
 - **AWS Lambda** - Serverless (via adapter)
 - **DigitalOcean App Platform** - Simple deployment
@@ -318,41 +309,6 @@ Your backend will be available at: `https://your-app.up.railway.app`
 - **Cloudflare Pages** - Fast CDN
 - **GitHub Pages** - Free static hosting
 - **AWS S3 + CloudFront** - Scalable CDN
-
-### Docker Deployment (Advanced)
-
-**Backend Dockerfile** (create in `backend/`):
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-EXPOSE 3001
-CMD ["node", "server.js"]
-```
-
-**Build and Run**:
-```bash
-cd backend
-docker build -t anchorfx-backend .
-docker run -p 3001:3001 anchorfx-backend
-```
-
-**Frontend Dockerfile** (create in `frontend/`):
-```dockerfile
-FROM node:18-alpine AS build
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-RUN npm run build
-
-FROM nginx:alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
-```
 
 ### Production Checklist
 
