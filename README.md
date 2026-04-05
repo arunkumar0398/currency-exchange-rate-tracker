@@ -11,6 +11,18 @@ AnchorFX provides reliable, up-to-date currency exchange rates by:
 - Gracefully degrading when sources are unavailable
 - Displaying status clearly with visual indicators
 
+## Initial Thoughts
+
+The main problem is that free-tier forex APIs don't always work, which makes users lose faith before they switch to paid. A layer of reliability on top of free APIs, not better ones, will fix the problem.
+
+My first idea was to get data from three different APIs at once, store it heavily, and let the user know how up-to-date the data is. If all three APIs fail at once, instead of a hard error, show old cached data with a warning."Stale but visible" is better for user experience than "broken and empty."
+
+The caching strategy (5-minute TTL, 4-minute background pre-refresh) means that most requests get data that's only seconds old right away, even though the APIs update every day. This makes the UI feel "live" without putting too much stress on the APIs.
+
+The interesting problem was how to resolve conflicts: when three APIs give you slightly different rates, do you choose one or average them? When timestamps are close (they're all coming from the same market), I chose to average them. When timestamps are very different, I chose to use the newest source. This stops you from accidentally mixing old data with new data.
+
+I got rid of the currency converter, historical charts, user accounts, and dark mode. None of these solve the main issue, which is trust and reliability. Sent the least amount that answers the question, "Can I trust what I see?"
+
 ## Architecture
 
 ![Application Flow](application_flow.png)
