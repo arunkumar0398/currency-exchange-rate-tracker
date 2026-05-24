@@ -18,11 +18,15 @@ This is the user-facing interface for AnchorFX, providing real-time currency exc
 
 ## Tech Stack
 
-- **React 18** - UI framework with hooks
+- **React 19** - UI framework with hooks
 - **Vite 7.x** - Lightning-fast build tool and dev server
 - **Fluent UI React Components** - Microsoft's design system
 - **Fluent UI React Icons** - Official icon library
 - **ES6+ Modules** - Modern JavaScript
+
+## Live Deployment
+
+See the root README for the production frontend, backend, and API URLs.
 
 ## Project Structure
 
@@ -168,6 +172,12 @@ VITE_API_URL=http://localhost:3001
 ```
 
 **Default**: `http://localhost:3001`
+
+For production deployments:
+
+```env
+VITE_API_URL=https://currency-exchange-rate-tracker.onrender.com
+```
 
 ## API Integration
 

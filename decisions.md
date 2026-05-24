@@ -113,7 +113,7 @@ A 12-hour-old rate averaged with a 1-hour-old rate gives you a number that's nei
 
 **Stack:**
 - Vite for dev server + build (fast, no config hell)
-- React 18 (hooks, functional components)
+- React 19 (hooks, functional components)
 - Fluent UI (Microsoft's design system)
 
 **Why Fluent UI instead of Material UI / Tailwind / plain CSS?**
@@ -209,26 +209,28 @@ Kept it simple. USD base only.
 
 ---
 
-## Decision 11: Deployment Assumptions
+## Decision 11: Deployment
 
-**Not deployed yet, but here's the plan:**
+**Deployed setup:**
 
 **Backend:**
-- Heroku/Railway/Render free tier, or AWS Lambda behind API Gateway.
-- Environment var for `PORT` (defaults to 3001).
-- No DB needed, so no migrations or connection strings.
+- Deployed to Render at `https://currency-exchange-rate-tracker.onrender.com`.
+- Exposes `/api/rates`, `/api/health`, and `/api/currencies`.
+- Uses the platform-provided `PORT` env var, with `3001` as the local default.
+- No DB is required; the app uses in-memory cache and refills it from public APIs after restart.
+- On Render's free tier, the service may spin down after inactivity. That can make the first request after a cold start slow, but once the process is warm, the in-memory cache keeps repeat requests fast.
 
 **Frontend:**
-- Vite build outputs static files to `dist/`.
-- Deploy to Vercel/Netlify (free tier, dead simple).
-- Set `VITE_API_URL` env var to point to backend.
+- Deployed to Vercel at `https://currency-exchange-rate-tracker-two.vercel.app/`.
+- Vite builds static files from the `frontend` directory.
+- `VITE_API_URL` is set to `https://currency-exchange-rate-tracker.onrender.com`, so the browser talks to our backend instead of calling public APIs directly.
 
 **CORS:**
-- Backend already has `cors()` middleware enabled.
-- In production, I'd lock it down to only the frontend domain.
+- Backend has `cors()` middleware enabled so the Vercel frontend can call the Render API.
+- In a production fintech environment, I would restrict CORS to the Vercel/custom frontend domain instead of allowing all origins.
 
 **Why these platforms?**
-Free tier, zero-config deploy (push to Git, auto-deploy), and I've used them before. Render is slightly nicer than Heroku these days IMO.
+Vercel is a natural fit for a Vite frontend, and Render is simple for a small Node/Express API. This keeps the deployed architecture close to the assignment requirement: frontend -> single backend endpoint -> public exchange-rate APIs.
 
 ---
 
