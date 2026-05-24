@@ -11,6 +11,12 @@ AnchorFX provides reliable, up-to-date currency exchange rates by:
 - Gracefully degrading when sources are unavailable
 - Displaying status clearly with visual indicators
 
+## Live Deployment
+
+- Frontend: https://currency-exchange-rate-tracker-two.vercel.app/
+- Backend: https://currency-exchange-rate-tracker.onrender.com
+- Rates API: https://currency-exchange-rate-tracker.onrender.com/api/rates
+
 ## Initial Thoughts
 
 The main problem is that free-tier forex APIs don't always work, which makes users lose faith before they switch to paid. A layer of reliability on top of free APIs, not better ones, will fix the problem.
@@ -55,7 +61,7 @@ The application follows a multi-layered architecture:
 ## Quick Start
 
 ### Prerequisites
-- Node.js 18+ and npm
+- Node.js 20.19+ or 22.12+ and npm
 
 ### Installation
 
@@ -244,57 +250,40 @@ npm run preview    # Preview production build
 
 ## Deployment
 
-### Render (Recommended for Backend)
+The project is deployed as two services:
 
-**Deploy Backend:**
+- **Frontend:** Vercel serves the React/Vite app at https://currency-exchange-rate-tracker-two.vercel.app/
+- **Backend:** Render runs the Express API at https://currency-exchange-rate-tracker.onrender.com
+- **API flow:** Vercel frontend -> Render `/api/rates` backend -> public exchange-rate APIs
 
-1. Go to [render.com](https://render.com) → **New** → **Web Service**
-2. Connect your GitHub repository
-3. Configure the service:
-   - **Root Directory**: `backend`
-   - **Runtime**: Node
-   - **Build Command**: `npm install`
-   - **Start Command**: `node server.js`
-   - **Instance Type**: Free
-4. Click **Create Web Service** — deploys in ~2-3 minutes
+The production frontend uses:
 
-**Verify deployment:**
-```bash
-curl https://your-app.onrender.com/api/health
+```env
+VITE_API_URL=https://currency-exchange-rate-tracker.onrender.com
 ```
 
-**Backend URL:**
-Your backend will be available at: `https://your-app.onrender.com`
+**Verify deployment:**
 
-### Vercel (Recommended for Frontend)
+```bash
+curl https://currency-exchange-rate-tracker.onrender.com/api/health
+curl https://currency-exchange-rate-tracker.onrender.com/api/rates
+```
 
-**Deploy Frontend:**
+### Deployment Steps
 
-1. **Install Vercel CLI**:
-   ```bash
-   npm install -g vercel
-   ```
+**Backend on Render**
 
-2. **Deploy from Frontend Directory**:
-   ```bash
-   cd frontend
-   vercel
-   ```
+1. Create a Render Web Service from the GitHub repository.
+2. Set **Root Directory** to `backend`.
+3. Set **Build Command** to `npm install`.
+4. Set **Start Command** to `node server.js`.
 
-3. **Set Environment Variables**:
-   - `VITE_API_URL` = Your Render backend URL
-   - Example: `https://anchorfx-backend.onrender.com`
+**Frontend on Vercel**
 
-4. **Production Deploy**:
-   ```bash
-   vercel --prod
-   ```
-
-**Alternative: Vercel Dashboard**
-- Connect GitHub repository
-- Set root directory to `frontend`
-- Add environment variable `VITE_API_URL`
-- Deploy
+1. Create a Vercel project from the GitHub repository.
+2. Set **Root Directory** to `frontend`.
+3. Set `VITE_API_URL` to `https://currency-exchange-rate-tracker.onrender.com`.
+4. Deploy the production build.
 
 ### Other Deployment Options
 
@@ -310,16 +299,13 @@ Your backend will be available at: `https://your-app.onrender.com`
 - **GitHub Pages** - Free static hosting
 - **AWS S3 + CloudFront** - Scalable CDN
 
-### Production Checklist
+### Production Status
 
-Before deploying to production:
-
-- [ ] Set `PORT` environment variable for backend
-- [ ] Set `VITE_API_URL` to production backend URL
-- [ ] Enable CORS for production frontend domain
-- [ ] Test all three states: live, stale, unavailable
-- [ ] Monitor API rate limits
-- [ ] Set up error logging (optional)
+- [x] Backend deployed with Render-provided `PORT`
+- [x] Frontend deployed with `VITE_API_URL=https://currency-exchange-rate-tracker.onrender.com`
+- [x] Live state verified on the deployed Vercel app
+- [ ] Restrict CORS to the production frontend domain
+- [ ] Add structured error logging and API rate-limit monitoring
 - [ ] Configure custom domain (optional)
 
 ## Environment Variables
@@ -330,8 +316,17 @@ PORT=3001  # Server port (default: 3001)
 ```
 
 ### Frontend
+
+Local development:
+
 ```env
-VITE_API_URL=http://localhost:3001  # Backend URL
+VITE_API_URL=http://localhost:3001  # Local backend URL
+```
+
+Production:
+
+```env
+VITE_API_URL=https://currency-exchange-rate-tracker.onrender.com  # Production backend URL
 ```
 
 ## Testing
@@ -363,7 +358,7 @@ curl http://localhost:3001/api/currencies
 - CORS middleware
 
 ### Frontend
-- React 18
+- React 19
 - Vite 7.x
 - Fluent UI (React Components)
 - Fluent UI Icons
