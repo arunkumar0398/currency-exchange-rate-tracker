@@ -256,6 +256,8 @@ The project is deployed as two services:
 - **Backend:** Render runs the Express API at https://currency-exchange-rate-tracker.onrender.com
 - **API flow:** Vercel frontend -> Render `/api/rates` backend -> public exchange-rate APIs
 
+Render free tier services may spin down after inactivity. The first request after a cold start can take longer than normal, while subsequent cached responses are fast.
+
 The production frontend uses:
 
 ```env
@@ -305,7 +307,6 @@ curl https://currency-exchange-rate-tracker.onrender.com/api/rates
 - [x] Frontend deployed with `VITE_API_URL=https://currency-exchange-rate-tracker.onrender.com`
 - [x] Live state verified on the deployed Vercel app
 - [ ] Restrict CORS to the production frontend domain
-- [ ] Add structured error logging and API rate-limit monitoring
 - [ ] Configure custom domain (optional)
 
 ## Environment Variables
@@ -387,6 +388,7 @@ curl http://localhost:3001/api/currencies
 - [ ] Rate change notifications
 - [ ] Export to CSV/Excel
 - [ ] WebSocket for real-time updates
+- [ ] Structured error logging and API rate-limit monitoring
 
 ## License
 

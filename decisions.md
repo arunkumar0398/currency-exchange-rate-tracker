@@ -218,6 +218,7 @@ Kept it simple. USD base only.
 - Exposes `/api/rates`, `/api/health`, and `/api/currencies`.
 - Uses the platform-provided `PORT` env var, with `3001` as the local default.
 - No DB is required; the app uses in-memory cache and refills it from public APIs after restart.
+- On Render's free tier, the service may spin down after inactivity. That can make the first request after a cold start slow, but once the process is warm, the in-memory cache keeps repeat requests fast.
 
 **Frontend:**
 - Deployed to Vercel at `https://currency-exchange-rate-tracker-two.vercel.app/`.

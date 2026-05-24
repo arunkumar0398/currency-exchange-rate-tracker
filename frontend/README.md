@@ -26,9 +26,7 @@ This is the user-facing interface for AnchorFX, providing real-time currency exc
 
 ## Live Deployment
 
-- Frontend: https://currency-exchange-rate-tracker-two.vercel.app/
-- Backend API: https://currency-exchange-rate-tracker.onrender.com
-- Rates endpoint: https://currency-exchange-rate-tracker.onrender.com/api/rates
+See the root README for the production frontend, backend, and API URLs.
 
 ## Project Structure
 
