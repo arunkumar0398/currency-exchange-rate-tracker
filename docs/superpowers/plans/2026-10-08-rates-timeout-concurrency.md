@@ -36,8 +36,9 @@
 - Create: `backend/test/server.test.js`
 
 **Interfaces:**
-- Export `createApp()` from `backend/server.js`; it constructs routes and middleware without listening or pre-warming.
-- Keep `node server.js` as the production entry point that creates the app, listens, and pre-warms.
+- Export named `createApp()` from `backend/server.js`; it constructs routes and middleware without listening or pre-warming.
+- Preserve the current default `app` export for compatibility, but do not bind a port or pre-warm merely by importing the module.
+- Keep `node server.js` as the production entry point that listens and pre-warms.
 - Add `npm test` using Node's built-in `node --test`; add no test dependency.
 
 - [ ] **Step 1: Extract `createApp()` and guard production startup** so importing the module does not listen on port 3001 or pre-warm the cache.
@@ -52,7 +53,7 @@
 
 **Interfaces:**
 - Preserve default `fetchAllSources()` behavior; add optional `timeoutMs` and `fetchImpl` test seams with production defaults of 5000 ms and `globalThis.fetch`.
-- Keep the abort deadline active through `response.json()`, and clear its timer in `finally`.
+- Keep the abort deadline active through `response.json()`, and clear its timer in a `finally` path.
 
 - [ ] **Step 1: Write a test with a controlled `fetchImpl`** that immediately returns a Response whose body stream stalls and is cancelled/rejected when the supplied signal aborts. Use a short test timeout.
 - [ ] **Step 2: Include successful provider responses** and assert the stalled source is skipped while the successful rates remain in the result.
@@ -68,8 +69,9 @@
 
 **Interfaces:**
 - Replace the boolean-only early return with one shared in-flight refresh promise; concurrent callers await it.
+- Retain the cache's `isRefreshing` health statistic, setting it when refresh starts and clearing it in `finally`.
 - Clear the shared promise after success or failure, allowing future retries.
-- Add an optional timestamp argument to `cache.set(data, timestamp = Date.now())` so tests can seed expired state deterministically; existing production calls retain current behavior.
+- Add optional timestamp argument to `cache.set(data, timestamp = Date.now())` so tests can seed expired state deterministically; existing production calls retain current behavior.
 - Use Node `http` for test requests so stubbing `globalThis.fetch` affects only upstream provider calls.
 
 - [ ] **Step 1: Add a deferred-provider empty-cache concurrency test.** Assert one refresh (one call per configured provider) and that both HTTP requests receive the same live outcome.
@@ -91,7 +93,7 @@
 
 ## Lens self-review
 
-- **Real vs simulated:** route, refresh, fetcher, abort, and body parsing code paths run; only external providers are controlled test doubles.
+- **Real vs simulated:** route, refresh, fetch, abort, and body parsing code paths run; only external providers are controlled test doubles.
 - **Reproducibility and cause:** tests recreate the stalled body and overlapping callers and assert the observed wrong response before implementation.
 - **Recovery and invariants:** assert partial provider recovery, stale/503 fallback, single refresh, and retry after failure.
 - **Boundaries:** `createApp()` is a small testability boundary; no general framework or new dependency is introduced.
