@@ -55,7 +55,7 @@
 - Preserve default `fetchAllSources()` behavior; add optional `timeoutMs` and `fetchImpl` test seams with production defaults of 5000 ms and `globalThis.fetch`.
 - Keep the abort deadline active through `response.json()`, and clear its timer in a `finally` path.
 
-- [ ] **Step 1: Write a test with a controlled `fetchImpl`** that immediately returns a Response whose body stream stalls and is cancelled/rejected when the supplied signal aborts. Use a short test timeout.
+- [ ] **Step 1: Write a test with a controlled `fetchImpl`** that immediately returns a Response whose body stream stalls and is cancelled/rejected when the supplied signal aborts. Use a short timeout and put a separate upper bound on the test itself so the pre-fix case fails instead of hanging.
 - [ ] **Step 2: Include successful provider responses** and assert the stalled source is skipped while the successful rates remain in the result.
 - [ ] **Step 3: Run the focused test against current code and confirm it fails** because the timer is cleared after headers, leaving body parsing pending.
 - [ ] **Step 4: Extend the timeout through body parsing; rerun the focused test** and confirm it passes without leaked timers or hanging work.
@@ -94,7 +94,7 @@
 ## Lens self-review
 
 - **Real vs simulated:** route, refresh, fetch, abort, and body parsing code paths run; only external providers are controlled test doubles.
-- **Reproducibility and cause:** tests recreate the stalled body and overlapping callers and assert the observed wrong response before implementation.
+- **Reproducibility and cause:** tests recreate the stalled body and overlapping callers, bound their own runtime, and assert the observed wrong behavior before implementation.
 - **Recovery and invariants:** assert partial provider recovery, stale/503 fallback, single refresh, and retry after failure.
 - **Boundaries:** `createApp()` is a small testability boundary; no general framework or new dependency is introduced.
 - **Evidence:** test output and final diff are required; intentions are not completion evidence.
