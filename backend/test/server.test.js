@@ -49,6 +49,7 @@ function requestJson(url, path) {
       response.on('data', chunk => { body += chunk; });
       response.on('end', () => resolve({ status: response.statusCode, body: JSON.parse(body) }));
     });
+    request.setTimeout(1000, () => request.destroy(new Error(`request ${path} timed out`)));
     request.on('error', reject);
   });
 }
