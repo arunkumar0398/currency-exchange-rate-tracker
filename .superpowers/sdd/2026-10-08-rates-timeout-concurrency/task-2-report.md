@@ -58,6 +58,7 @@ exit_code=1
 - The regression test uses only controlled in-process responses and verifies successful rates are retained while the stalled provider is skipped.
 - `git diff --check` passed.
 
-## Concerns
+## Final verification status
 
-- Full-suite verification remains blocked by the sandbox's loopback `listen()` restriction in the pre-existing server test. The focused timeout regression passes.
+- The initial full-suite attempt was blocked because the default sandbox denied loopback binding (`listen EPERM`). After loopback access was approved, the final `cd backend && npm test` run passed all 5 tests with 0 failures on Node.js v24.19.0. The failed attempt above is historical; full-suite verification is no longer blocked. The final run also included the bounded HTTP request cleanup added during review.
+- Node.js 18 was not available for a separate runtime test. See the Task 3 report and PR description for the complete verification record.
