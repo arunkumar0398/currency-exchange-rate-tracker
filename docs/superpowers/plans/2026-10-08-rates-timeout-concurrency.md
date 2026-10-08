@@ -93,6 +93,18 @@
 
 **Runtime note:** Verification ran on Node.js v24.19.0. Node.js 18 was not available for an additional runtime test; compatibility was checked against the project's Node 18 target by code review.
 
+### Post-review follow-up: align Task 2 verification note with final evidence
+
+**Finding:** `.superpowers/sdd/2026-10-08-rates-timeout-concurrency/task-2-report.md:63` says the full suite “remains blocked.” That describes the initial sandbox attempt, but not the later approved run that passed all five tests.
+
+**Files:**
+- Modify: `.superpowers/sdd/2026-10-08-rates-timeout-concurrency/task-2-report.md`
+
+- [ ] **Step 1: Preserve the historical sandbox failure and correct the final status.** Keep the initial `listen EPERM` attempt as historical evidence; replace the “remains blocked” conclusion with the final verified result: `cd backend && npm test` passed 5/5 on Node.js v24.19.0 after loopback access was approved. Point to `task-3-report.md` for the full-suite evidence and retain the Node.js 18 runtime limitation.
+- [ ] **Step 2: Check consistency across both task reports and the PR description.** They should distinguish the initial sandbox restriction from the later successful suite run and make no Node.js 18 runtime claim.
+- [ ] **Step 3: Run `git diff --check` and inspect the report-only diff.** No application code or tests need to change for this documentation correction.
+- [ ] **Step 4: Commit the documentation correction** with message `docs: clarify final backend test result`.
+
 ## Lens self-review
 
 - **Real vs simulated:** route, refresh, fetch, abort, and body parsing code paths run; only external providers are controlled test doubles.
