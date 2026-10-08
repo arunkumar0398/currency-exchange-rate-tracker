@@ -13,35 +13,38 @@ import { resolveRates } from './resolver.js';
 import * as cache from './cache.js';
 
 const PORT = process.env.PORT || 3001;
+let refreshPromise = null;
 
 /**
  * Fetch fresh rates from APIs and update cache
  * @returns {Promise<Object|null>} Resolved rates or null on failure
  */
 async function refreshRates() {
-  if (cache.isRefreshing()) {
-    console.log('Refresh already in progress, skipping...');
-    return null;
-  }
+  if (refreshPromise) return refreshPromise;
 
   cache.setRefreshing(true);
 
-  try {
-    const sources = await fetchAllSources();
-    const resolved = resolveRates(sources);
+  refreshPromise = (async () => {
+    try {
+      const sources = await fetchAllSources();
+      const resolved = resolveRates(sources);
 
-    if (resolved) {
-      cache.set(resolved);
-      console.log('Cache updated successfully');
+      if (resolved) {
+        cache.set(resolved);
+        console.log('Cache updated successfully');
+      }
+
+      return resolved;
+    } catch (error) {
+      console.error('Error refreshing rates:', error.message);
+      return null;
+    } finally {
+      cache.setRefreshing(false);
+      refreshPromise = null;
     }
+  })();
 
-    return resolved;
-  } catch (error) {
-    console.error('Error refreshing rates:', error.message);
-    return null;
-  } finally {
-    cache.setRefreshing(false);
-  }
+  return refreshPromise;
 }
 
 /**

@@ -36,10 +36,11 @@ export function get() {
 /**
  * Set cache data
  * @param {Object} data - Exchange rates data to cache
+ * @param {number} timestamp - Cache timestamp (defaults to the current time)
  */
-export function set(data) {
+export function set(data, timestamp = Date.now()) {
   cache.data = data;
-  cache.timestamp = Date.now();
+  cache.timestamp = timestamp;
 }
 
 /**
