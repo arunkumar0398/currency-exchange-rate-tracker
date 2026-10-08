@@ -58,33 +58,18 @@ export const API_SOURCES = {
 };
 
 /**
- * Fetch with timeout
- * @param {string} url - URL to fetch
+ * Fetch a single API source with a timeout that covers headers and body parsing
+ * @param {Object} source - API source configuration
  * @param {number} timeout - Timeout in milliseconds
- * @returns {Promise<Response>}
+ * @param {typeof fetch} fetchImpl - Fetch implementation
+ * @returns {Promise<Object|null>} Parsed data or null on failure
  */
-async function fetchWithTimeout(url, timeout) {
+async function fetchFromSource(source, timeout, fetchImpl) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
   try {
-    const response = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    throw error;
-  }
-}
-
-/**
- * Fetch from a single API source
- * @param {Object} source - API source configuration
- * @returns {Promise<Object|null>} Parsed data or null on failure
- */
-async function fetchFromSource(source) {
-  try {
-    const response = await fetchWithTimeout(source.url, TIMEOUT);
+    const response = await fetchImpl(source.url, { signal: controller.signal });
 
     if (!response.ok) {
       console.error(`[${source.name}] HTTP error: ${response.status}`);
@@ -102,6 +87,8 @@ async function fetchFromSource(source) {
       console.error(`[${source.name}] Fetch error:`, error.message);
     }
     return null;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
@@ -109,13 +96,13 @@ async function fetchFromSource(source) {
  * Fetch rates from all sources in parallel
  * @returns {Promise<Object[]>} Array of successful results
  */
-export async function fetchAllSources() {
+export async function fetchAllSources({ timeoutMs = TIMEOUT, fetchImpl = globalThis.fetch } = {}) {
   const sources = Object.values(API_SOURCES);
 
   console.log(`Fetching from ${sources.length} sources in parallel...`);
 
   const results = await Promise.all(
-    sources.map(source => fetchFromSource(source))
+    sources.map(source => fetchFromSource(source, timeoutMs, fetchImpl))
   );
 
   // Filter out failed requests (null results)

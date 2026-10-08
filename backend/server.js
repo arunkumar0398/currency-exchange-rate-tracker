@@ -6,45 +6,45 @@
 
 import express from 'express';
 import cors from 'cors';
+import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import { fetchAllSources, BASE_CURRENCY, TARGET_CURRENCIES } from './fetcher.js';
 import { resolveRates } from './resolver.js';
 import * as cache from './cache.js';
 
-const app = express();
 const PORT = process.env.PORT || 3001;
-
-// Enable CORS for frontend
-app.use(cors());
-app.use(express.json());
+let refreshPromise = null;
 
 /**
  * Fetch fresh rates from APIs and update cache
  * @returns {Promise<Object|null>} Resolved rates or null on failure
  */
 async function refreshRates() {
-  if (cache.isRefreshing()) {
-    console.log('Refresh already in progress, skipping...');
-    return null;
-  }
+  if (refreshPromise) return refreshPromise;
 
   cache.setRefreshing(true);
 
-  try {
-    const sources = await fetchAllSources();
-    const resolved = resolveRates(sources);
+  refreshPromise = (async () => {
+    try {
+      const sources = await fetchAllSources();
+      const resolved = resolveRates(sources);
 
-    if (resolved) {
-      cache.set(resolved);
-      console.log('Cache updated successfully');
+      if (resolved) {
+        cache.set(resolved);
+        console.log('Cache updated successfully');
+      }
+
+      return resolved;
+    } catch (error) {
+      console.error('Error refreshing rates:', error.message);
+      return null;
+    } finally {
+      cache.setRefreshing(false);
+      refreshPromise = null;
     }
+  })();
 
-    return resolved;
-  } catch (error) {
-    console.error('Error refreshing rates:', error.message);
-    return null;
-  } finally {
-    cache.setRefreshing(false);
-  }
+  return refreshPromise;
 }
 
 /**
@@ -69,119 +69,130 @@ function triggerBackgroundRefresh(cached) {
  * - "stale": Cached data (APIs unavailable but cache exists)
  * - "unavailable": No data available (all sources failed, no cache)
  */
-app.get('/api/rates', async (req, res) => {
-  console.log('\n--- GET /api/rates ---');
+export function createApp() {
+  const app = express();
+  app.use(cors());
+  app.use(express.json());
 
-  const cached = cache.get();
+  app.get('/api/rates', async (req, res) => {
+    console.log('\n--- GET /api/rates ---');
 
-  // If we have valid (non-stale) cached data, return it
-  if (cached && !cached.isStale) {
-    console.log('Returning fresh cached data');
-    triggerBackgroundRefresh(cached);
+    const cached = cache.get();
 
-    return res.json({
-      status: 'live',
+    // If we have valid (non-stale) cached data, return it
+    if (cached && !cached.isStale) {
+      console.log('Returning fresh cached data');
+      triggerBackgroundRefresh(cached);
+
+      return res.json({
+        status: 'live',
+        base: BASE_CURRENCY,
+        currencies: TARGET_CURRENCIES,
+        rates: cached.data.rates,
+        timestamp: cached.data.timestamp,
+        sources: cached.data.sources,
+        resolution: cached.data.resolution,
+        cached: true,
+        cacheAge: cached.age
+      });
+    }
+
+    // Try to fetch fresh data
+    console.log('Fetching fresh data...');
+    const freshData = await refreshRates();
+
+    if (freshData) {
+      console.log('Returning fresh API data');
+      return res.json({
+        status: 'live',
+        base: BASE_CURRENCY,
+        currencies: TARGET_CURRENCIES,
+        rates: freshData.rates,
+        timestamp: freshData.timestamp,
+        sources: freshData.sources,
+        resolution: freshData.resolution,
+        cached: false
+      });
+    }
+
+    // Fresh fetch failed - check if we have stale cached data
+    if (cached) {
+      console.log('Returning stale cached data (APIs unavailable)');
+      return res.json({
+        status: 'stale',
+        base: BASE_CURRENCY,
+        currencies: TARGET_CURRENCIES,
+        rates: cached.data.rates,
+        timestamp: cached.data.timestamp,
+        sources: cached.data.sources,
+        resolution: cached.data.resolution,
+        cached: true,
+        cacheAge: cached.age,
+        warning: 'Data may be outdated. Live sources are temporarily unavailable.'
+      });
+    }
+
+    // No data available at all
+    console.log('No data available (all sources failed, no cache)');
+    return res.status(503).json({
+      status: 'unavailable',
       base: BASE_CURRENCY,
       currencies: TARGET_CURRENCIES,
-      rates: cached.data.rates,
-      timestamp: cached.data.timestamp,
-      sources: cached.data.sources,
-      resolution: cached.data.resolution,
-      cached: true,
-      cacheAge: cached.age
+      error: 'Exchange rate data is temporarily unavailable. Please try again later.',
+      retryAfter: 30 // Suggest retry after 30 seconds
     });
-  }
+  });
 
-  // Try to fetch fresh data
-  console.log('Fetching fresh data...');
-  const freshData = await refreshRates();
+  /**
+   * GET /api/health
+   * Health check endpoint with cache statistics
+   */
+  app.get('/api/health', (req, res) => {
+    const stats = cache.getStats();
 
-  if (freshData) {
-    console.log('Returning fresh API data');
-    return res.json({
-      status: 'live',
+    res.json({
+      status: 'ok',
+      uptime: process.uptime(),
+      cache: stats
+    });
+  });
+
+  /**
+   * GET /api/currencies
+   * Returns list of supported currencies
+   */
+  app.get('/api/currencies', (req, res) => {
+    res.json({
       base: BASE_CURRENCY,
-      currencies: TARGET_CURRENCIES,
-      rates: freshData.rates,
-      timestamp: freshData.timestamp,
-      sources: freshData.sources,
-      resolution: freshData.resolution,
-      cached: false
+      targets: TARGET_CURRENCIES
     });
-  }
-
-  // Fresh fetch failed - check if we have stale cached data
-  if (cached) {
-    console.log('Returning stale cached data (APIs unavailable)');
-    return res.json({
-      status: 'stale',
-      base: BASE_CURRENCY,
-      currencies: TARGET_CURRENCIES,
-      rates: cached.data.rates,
-      timestamp: cached.data.timestamp,
-      sources: cached.data.sources,
-      resolution: cached.data.resolution,
-      cached: true,
-      cacheAge: cached.age,
-      warning: 'Data may be outdated. Live sources are temporarily unavailable.'
-    });
-  }
-
-  // No data available at all
-  console.log('No data available (all sources failed, no cache)');
-  return res.status(503).json({
-    status: 'unavailable',
-    base: BASE_CURRENCY,
-    currencies: TARGET_CURRENCIES,
-    error: 'Exchange rate data is temporarily unavailable. Please try again later.',
-    retryAfter: 30 // Suggest retry after 30 seconds
   });
-});
+  return app;
+}
 
-/**
- * GET /api/health
- * Health check endpoint with cache statistics
- */
-app.get('/api/health', (req, res) => {
-  const stats = cache.getStats();
-
-  res.json({
-    status: 'ok',
-    uptime: process.uptime(),
-    cache: stats
-  });
-});
-
-/**
- * GET /api/currencies
- * Returns list of supported currencies
- */
-app.get('/api/currencies', (req, res) => {
-  res.json({
-    base: BASE_CURRENCY,
-    targets: TARGET_CURRENCIES
-  });
-});
+const app = createApp();
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`\nExchange Rate Tracker API running on http://localhost:${PORT}`);
-  console.log(`\nEndpoints:`);
-  console.log(`  GET /api/rates      - Fetch exchange rates`);
-  console.log(`  GET /api/health     - Health check`);
-  console.log(`  GET /api/currencies - List supported currencies`);
-  console.log(`\nBase currency: ${BASE_CURRENCY}`);
-  console.log(`Target currencies: ${TARGET_CURRENCIES.join(', ')}`);
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
+  app.listen(PORT, () => {
+    console.log(`\nExchange Rate Tracker API running on http://localhost:${PORT}`);
+    console.log(`\nEndpoints:`);
+    console.log(`  GET /api/rates      - Fetch exchange rates`);
+    console.log(`  GET /api/health     - Health check`);
+    console.log(`  GET /api/currencies - List supported currencies`);
+    console.log(`\nBase currency: ${BASE_CURRENCY}`);
+    console.log(`Target currencies: ${TARGET_CURRENCIES.join(', ')}`);
 
-  // Pre-warm cache on startup
-  console.log('\nPre-warming cache...');
-  refreshRates().then(result => {
-    if (result) {
-      console.log('Cache pre-warmed successfully');
-    } else {
-      console.log('Cache pre-warm failed - will retry on first request');
-    }
+    // Pre-warm cache on startup
+    console.log('\nPre-warming cache...');
+    refreshRates().then(result => {
+      if (result) {
+        console.log('Cache pre-warmed successfully');
+      } else {
+        console.log('Cache pre-warm failed - will retry on first request');
+      }
+    });
   });
-});
+}
 
 export default app;
