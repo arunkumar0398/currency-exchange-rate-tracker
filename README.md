@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 3165)
+Total output lines: 429
+
 # AnchorFX - Currency Exchange Rate Tracker
 
 A full-stack application for tracking real-time currency exchange rates with intelligent caching, multi-source data aggregation, and a modern UI.
@@ -61,7 +64,7 @@ The application follows a multi-layered architecture:
 ## Quick Start
 
 ### Prerequisites
-- Node.js 20.19+ or 22.12+ and npm
+- Node.js 22.12.x or 24.x and npm
 
 ### Installation
 
@@ -73,7 +76,7 @@ cd currency-exchange-rate-tracker
 2. Install backend dependencies
 ```bash
 cd backend
-npm install
+npm ci
 ```
 
 3. Install frontend dependencies
@@ -203,37 +206,7 @@ All APIs are:
 ## Caching Strategy
 
 - **Cache TTL**: 5 minutes
-- **Refresh Threshold**: 4 minutes
-- **Behavior**:
-  - 0-4 min: Return cache immediately
-  - 4-5 min: Return cache + trigger background refresh
-  - 5+ min: Fetch fresh data
-  - APIs fail: Return stale cache with warning
-  - No cache + APIs fail: Return 503 error
-
-## Conflict Resolution
-
-When multiple sources return data:
-
-1. **Single source**: Use directly
-2. **Timestamps differ > 1 hour**: Use freshest source only
-3. **Timestamps within 1 hour**: Average all rates
-
-## Development
-
-### Backend Development
-```bash
-cd backend
-npm run dev  # Auto-reload with --watch flag
-```
-
-### Frontend Development
-```bash
-cd frontend
-npm run dev  # Vite dev server with HMR
-```
-
-### Build for Production
+- **Refresh Thre…165 tokens truncated…Build for Production
 
 Backend:
 ```bash
@@ -267,9 +240,22 @@ VITE_API_URL=https://currency-exchange-rate-tracker.onrender.com
 **Verify deployment:**
 
 ```bash
-curl https://currency-exchange-rate-tracker.onrender.com/api/health
-curl https://currency-exchange-rate-tracker.onrender.com/api/rates
+API_BASE=https://currency-exchange-rate-tracker.onrender.com
+curl --fail-with-body -sS "$API_BASE/api/health"
+curl --fail-with-body -sS "$API_BASE/api/rates"
+curl --fail-with-body -sS "$API_BASE/api/currencies"
 ```
+
+Expected results:
+
+- `/api/health` returns HTTP 200 with `status: "ok"` and cache statistics.
+- `/api/rates` returns HTTP 200 with `status: "live"` or `"stale"`, base `USD`, and all 10 target rates: `EUR`, `GBP`, `JPY`, `CAD`, `AUD`, `CHF`, `CNY`, `INR`, `MXN`, and `BRL`. A stale response must include a warning. A 503 `unavailable` response means the service has no usable rate data and needs investigation.
+- `/api/currencies` returns HTTP 200 with base `USD` and the same 10 targets.
+- Open the frontend at https://currency-exchange-rate-tracker-two.vercel.app/ and confirm it renders the rates returned by `/api/rates` and shows the corresponding Live or Stale state.
+
+Record the check date, source commit, and deployed backend commit when available. Do not infer the deployed commit from a successful health response.
+
+**Production smoke record (October 9, 2026):** `/api/health`, `/api/rates`, and `/api/currencies` returned HTTP 200. The rates response was `live` with all 10 pairs; five concurrent `/api/rates` requests also returned HTTP 200. The frontend was observed rendering all 10 pairs with a `LIVE` badge on October 8, 2026. The deployed Render commit was not exposed by these public endpoints and remains unverified; the source commit on `master` during the API check was `1a8da46`.
 
 ### Deployment Steps
 
@@ -277,8 +263,19 @@ curl https://currency-exchange-rate-tracker.onrender.com/api/rates
 
 1. Create a Render Web Service from the GitHub repository.
 2. Set **Root Directory** to `backend`.
-3. Set **Build Command** to `npm install`.
+3. Set **Build Command** to `npm ci`.
 4. Set **Start Command** to `node server.js`.
+
+**Backend Docker image**
+
+The root `Dockerfile` uses Node.js 22 and runs the backend test suite in a build stage before producing the runtime image:
+
+```bash
+docker build -t currency-exchange-rate-tracker-backend .
+docker run --rm -e PORT=3001 -p 3001:3001 currency-exchange-rate-tracker-backend
+```
+
+The image build runs the backend test suite before producing the runtime image. CI also starts the runtime image and checks `/api/health` on every push and pull request targeting `master`.
 
 **Frontend on Vercel**
 

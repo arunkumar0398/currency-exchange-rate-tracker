@@ -1,0 +1,55 @@
+name: Backend CI
+
+on:
+  push:
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Backend tests (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [22.12.0, 24.x]
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Run backend tests
+        run: npm test
+
+  docker:
+    name: Build tested Node 22 Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Build image and run tests in its test stage
+        run: docker build --tag currency-exchange-rate-tracker-backend .
+      - name: Start runtime image and verify health endpoint
+        run: |
+          container_id=$(docker run --detach --publish 3001:3001 currency-exchange-rate-tracker-backend)
+          trap 'docker logs "$container_id"; docker rm --force "$container_id"' EXIT
+          for attempt in {1..10}; do
+            if curl --fail --silent http://localhost:3001/api/health; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Backend health endpoint did not become ready" >&2
+          exit 1
