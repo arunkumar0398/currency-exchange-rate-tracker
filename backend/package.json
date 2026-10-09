@@ -4,6 +4,9 @@
   "description": "Backend API for real-time currency exchange rate tracking",
   "main": "server.js",
   "type": "module",
+  "engines": {
+    "node": ">=22.12.0 <23 || >=24.0.0 <25"
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
