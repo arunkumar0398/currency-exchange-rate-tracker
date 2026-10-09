@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 3165)
+Total output lines: 429
+
 # AnchorFX - Currency Exchange Rate Tracker
 
 A full-stack application for tracking real-time currency exchange rates with intelligent caching, multi-source data aggregation, and a modern UI.
@@ -203,37 +206,7 @@ All APIs are:
 ## Caching Strategy
 
 - **Cache TTL**: 5 minutes
-- **Refresh Threshold**: 4 minutes
-- **Behavior**:
-  - 0-4 min: Return cache immediately
-  - 4-5 min: Return cache + trigger background refresh
-  - 5+ min: Fetch fresh data
-  - APIs fail: Return stale cache with warning
-  - No cache + APIs fail: Return 503 error
-
-## Conflict Resolution
-
-When multiple sources return data:
-
-1. **Single source**: Use directly
-2. **Timestamps differ > 1 hour**: Use freshest source only
-3. **Timestamps within 1 hour**: Average all rates
-
-## Development
-
-### Backend Development
-```bash
-cd backend
-npm run dev  # Auto-reload with --watch flag
-```
-
-### Frontend Development
-```bash
-cd frontend
-npm run dev  # Vite dev server with HMR
-```
-
-### Build for Production
+- **Refresh Thre…165 tokens truncated…Build for Production
 
 Backend:
 ```bash
@@ -302,7 +275,7 @@ docker build -t currency-exchange-rate-tracker-backend .
 docker run --rm -e PORT=3001 -p 3001:3001 currency-exchange-rate-tracker-backend
 ```
 
-The image build must complete successfully before the runtime image is produced. The CI workflow builds this image on every push and pull request targeting `master`.
+The image build runs the backend test suite before producing the runtime image. CI also starts the runtime image and checks `/api/health` on every push and pull request targeting `master`.
 
 **Frontend on Vercel**
 
